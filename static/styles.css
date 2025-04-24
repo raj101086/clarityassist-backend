@@ -1,0 +1,309 @@
+/* Basic body and container styling */
+body {
+    font-family: sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 20px;
+    background-color: #f4f4e0; /* Light yellow/beige */
+    color: #333; /* Dark text */
+    transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition */
+}
+
+.container {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #fff; /* White background */
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease; /* Smooth transition */
+}
+
+h1, h2 {
+    color: #005f5f; /* Teal color for headings */
+    text-align: center;
+}
+
+/* Card styling for sections */
+.card {
+    background-color: #fff; /* White card background */
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); /* Subtle shadow */
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease; /* Smooth transition */
+}
+
+/* Upload section specific styles */
+.upload-section {
+    text-align: center;
+}
+
+.file-input-area {
+    margin-top: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.custom-file-upload {
+    display: inline-block;
+    background-color: #008080; /* Teal button color */
+    color: white;
+    padding: 12px 20px; /* Adjusted padding for minimum height */
+    min-height: 44px; /* Ensure minimum touch target size */
+    box-sizing: border-box;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    line-height: 1.5;
+    text-align: center;
+    border: none; /* Ensure no default border */
+}
+
+.custom-file-upload:hover {
+    background-color: #006666; /* Darker teal on hover */
+}
+
+/* Hide the actual file input */
+#file-upload {
+    display: none;
+}
+
+#file-name {
+    font-style: italic;
+    color: #555; /* Grayish text */
+}
+
+/* Action buttons grid (Using Flexbox) */
+.action-buttons-grid {
+    display: flex; /* Use Flexbox */
+    flex-wrap: wrap; /* Allow items to wrap to the next line */
+    justify-content: center; /* Center buttons horizontally */
+    gap: 15px; /* Space between buttons */
+    margin-top: 20px;
+}
+
+.action-button {
+    /* --- Adjusted Flex Properties (New!) --- */
+    flex: 1 1 45%; /* Allow growing/shrinking, base size approx 45% */
+    min-width: 150px; /* Still keep a minimum width */
+    /* ------------------------------------ */
+    background-color: #008080; /* Teal button color */
+    color: white;
+    padding: 12px 20px; /* Adjusted padding for minimum height */
+    min-height: 44px; /* Ensure minimum touch target size */
+    box-sizing: border-box;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.3s ease;
+}
+
+.action-button:hover {
+    background-color: #006666; /* Darker teal on hover */
+}
+
+/* Results section styles */
+.results-section {
+    margin-top: 30px;
+    display: none; /* Initially hidden */
+}
+
+.simplified-output {
+    /* Inherits .card styles */
+}
+
+#output-text {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 10px;
+    background-color: #eee; /* Light gray background for output */
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    color: #333; /* Dark text */
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+/* Post-processing actions (Read Aloud, Share, Save) */
+.post-processing-actions {
+    margin-top: 15px;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.post-processing-button {
+     background-color: #d3d3d3; /* Light gray button */
+     color: #333; /* Dark text */
+     padding: 10px 20px; /* Adjusted padding */
+     min-height: 44px; /* Ensure minimum touch target size */
+     box-sizing: border-box;
+     border: none;
+     border-radius: 5px;
+     cursor: pointer;
+     font-size: 0.9em;
+     transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.post-processing-button:hover {
+     background-color: #bbb; /* Darker gray on hover */
+}
+
+/* Loading message */
+#loading-message {
+    color: #008080; /* Teal loading text */
+}
+
+/* Style for the Dark Mode Toggle button itself */
+#dark-mode-toggle {
+     background-color: #666; /* Gray toggle button */
+     color: white;
+     padding: 10px 15px; /* Adjusted padding */
+     min-height: 44px; /* Ensure minimum touch target size */
+     box-sizing: border-box;
+     border: none;
+     border-radius: 4px;
+     cursor: pointer;
+     font-size: 0.9em;
+     margin-bottom: 15px;
+     transition: background-color 0.3s ease;
+}
+
+#dark-mode-toggle:hover {
+    background-color: #555; /* Darker gray on hover */
+}
+
+
+/* --- Theme Styles --- */
+
+/* Default Theme (Matching User's Preferred Original Look) - Applied to body by default */
+/* The base styles above implement this theme */
+
+
+/* Dark Theme (High Contrast Black) */
+body.theme-dark {
+    background-color: #000000; /* Black background */
+    color: #ffffff; /* White text */
+}
+
+.theme-dark .container {
+     background-color: #1a1a1a; /* Very dark gray container */
+     box-shadow: 0 0 15px rgba(255, 255, 255, 0.1); /* Light shadow */
+}
+
+.theme-dark .card {
+     background-color: #2a2a2a; /* Dark gray card background */
+     border-color: #555; /* Darker border */
+}
+
+.theme-dark h1, .theme-dark h2 {
+    color: #00ffff; /* Cyan or bright color for headings */
+}
+
+/* Adjust button styles for dark theme */
+.theme-dark .action-button,
+.theme-dark .custom-file-upload { /* Teal buttons in dark mode */
+    background-color: #004040; /* Darker teal */
+    color: #ffffff; /* White text */
+    border-color: #008080; /* Teal accent border */
+}
+
+.theme-dark .action-button:hover,
+.theme-dark .custom-file-upload:hover {
+     background-color: #003030; /* Even darker teal on hover */
+}
+
+.theme-dark .post-processing-button { /* Gray post-processing buttons in dark mode */
+    background-color: #444; /* Dark gray */
+    color: #ffffff; /* White text */
+    border-color: #666; /* Lighter gray border */
+}
+
+.theme-dark .post-processing-button:hover {
+    background-color: #555; /* Slightly lighter dark gray on hover */
+}
+
+
+/* Adjust specific elements for dark theme */
+.theme-dark #file-name {
+     color: #ccc; /* Lighter gray */
+}
+
+.theme-dark #output-text {
+    background-color: #1a1a1a; /* Match container background */
+    border-color: #555;
+    color: #ffffff; /* White text */
+}
+
+.theme-dark #loading-message {
+    color: #00ffff; /* Cyan loading text */
+}
+
+.theme-dark #dark-mode-toggle {
+    background-color: #444; /* Dark gray for toggle */
+    color: #ffffff; /* White text */
+}
+
+.theme-dark #dark-mode-toggle:hover {
+     background-color: #555; /* Slightly lighter on hover */
+}
+
+
+/* Sepia Theme */
+body.theme-sepia {
+    background-color: #F4EDE3; /* Sepia paper color */
+    color: #5C4033; /* Dark brown text */
+}
+
+.theme-sepia .container {
+     background-color: #E0D2C3; /* Lighter sepia container */
+     box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.theme-sepia .card {
+     background-color: #D3C4B5; /* Even lighter sepia card */
+     border-color: #A09080; /* Brown border */
+}
+
+.theme-sepia h1, .theme-sepia h2 {
+    color: #8B4513; /* SaddleBrown for headings */
+}
+
+/* Adjust button styles for sepia theme */
+.theme-sepia .action-button,
+.theme-sepia .custom-file-upload { /* Teal buttons in sepia mode */
+    background-color: #A0522D; /* Sienna brown */
+    color: white;
+    border-color: #8B4513; /* SaddleBrown border */
+}
+
+.theme-sepia .action-button:hover,
+.theme-sepia .custom-file-upload:hover {
+     background-color: #8B3E20; /* Darker sienna */
+}
+
+.theme-sepia .post-processing-button { /* Gray post-processing buttons in sepia mode */
+     background-color: #D3C4B5; /* Match card */
+     color: #5C4033; /* Dark brown text */
+     border-color: #A09080; /* Brown border */
+}
+
+.theme-sepia .post-processing-button:hover {
+     background-color: #C0B0A0; /* Slightly darker on hover */
+}
+
+
+/* Reset button styles for dark/sepia toggle itself in light mode */
+body #dark-mode-toggle {
+    background-color: #666; /* Default gray */
+    color: white;
+}

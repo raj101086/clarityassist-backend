@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClarityAssist</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>ClarityAssist</h1>
+
+        <button id="dark-mode-toggle">Toggle Dark Mode</button>
+
+        <form id="upload-form" class="upload-section card" enctype="multipart/form-data">
+            <h2>Upload File</h2>
+            <p>Upload a document to simplify.</p>
+            <div class="file-input-area">
+                <label for="file-upload" class="custom-file-upload">
+                    Choose File
+                </label>
+                <input id="file-upload" type="file" name="document"/>
+                <span id="file-name">No file chosen</span>
+            </div>
+
+            </form>
+        <div class="action-buttons-grid">
+            <button class="action-button" data-action="summarize">Summarize</button>
+            <button class="action-button" data-action="simplify">Simplify</button>
+            <button class="action-button" data-action="extract-instructions">Extract Instructions</button>
+            <button class="action-button" data-action="analyze">Analyze File</button>
+        </div>
+
+        <p id="loading-message" style="display: none; text-align: center; color: #008080; font-size: 1.2em;"></p>
+
+
+        <div id="results-section" class="results-section">
+             <div class="simplified-output card">
+                <h2>Simplified Content</h2>
+                <div id="output-text"></div>
+            </div>
+
+            <div class="post-processing-actions">
+                 <button class="post-processing-button" id="read-aloud-button">Read Aloud</button>
+                 <button class="post-processing-button" id="share-button">Share</button> <button class="post-processing-button" id="save-button">Save</button> </div>
+        </div>
+
+        <audio id="tts-audio" controls style="display: none; margin-top: 20px;"></audio>
+
+
+    </div>
+
+    <script>
+        // --- Get References to HTML Elements ---
+        const fileInput = document.getElementById('file-upload');
+        const fileNameSpan = document.getElementById('file-name');
+        const outputTextDiv = document.getElementById('output-text');
+        const resultsSection = document.getElementById('results-section');
+        const actionButtons = document.querySelectorAll('.action-button'); // Get all main action buttons
+        const uploadForm = document.getElementById('upload-form'); // Get the form element
+        const loadingMessage = document.getElementById('loading-message'); // Get the loading element
+        const readAloudButton = document.getElementById('read-aloud-button'); // Get the Read Aloud button
+        const shareButton = document.getElementById('share-button'); // Get the Share button
+        const saveButton = document.getElementById('save-button'); // Get the Save button
+        const ttsAudioElement = document.getElementById('tts-audio'); // Get the audio element
+        const darkModeToggle = document.getElementById('dark-mode-toggle'); // Get the Dark Mode toggle (New!)
+
+
+        // --- Handle file name display and clear results on new file selection ---
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files.length > 0) {
+                fileNameSpan.textContent = this.files[0].name;
+                // Hide previous results and clear related elements
+                resultsSection.style.display = 'none';
+                outputTextDiv.textContent = '';
+                loadingMessage.style.display = 'none'; // Hide loading message
+                // Stop any currently playing audio
+                ttsAudioElement.pause();
+                ttsAudioElement.removeAttribute('src'); // Clear the audio source
+                ttsAudioElement.load(); // Reload the audio element to apply source change
+            } else {
+                fileNameSpan.textContent = 'No file chosen';
+                resultsSection.style.display = 'none';
+                outputTextDiv.textContent = '';
+                loadingMessage.style.display = 'none'; // Hide loading message
+                 // Stop any currently playing audio
+                ttsAudioElement.pause();
+                ttsAudioElement.removeAttribute('src');
+                ttsAudioElement.load();
+            }
+        });
+
+        // --- Handle clicks on main action buttons (Summarize, Simplify, etc.) ---
+        actionButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const action = this.getAttribute('data-action'); // 'summarize', 'simplify', etc.
+                console.log(`Action button clicked: ${action}`);
+
+                // Stop any currently playing audio when a new process starts
+                ttsAudioElement.pause();
+                ttsAudioElement.removeAttribute('src');
+                ttsAudioElement.load();
+
+
+                // Check if a file has been selected in the upload form
+                if (!fileInput.files || fileInput.files.length === 0) {
+                    alert('Please choose a file first.'); // Provide feedback to the user
+                    return; // Stop the process if no file is selected
+                }
+
+                // --- Start the upload and processing Fetch call ---
+
+                // Hide previous results and show loading message
+                resultsSection.style.display = 'none'; // Hide the results section
+                outputTextDiv.textContent = ''; // Clear previous output text
+                loadingMessage.textContent = `Processing (${action})...`; // Set loading text indicating the action
+                loadingMessage.style.display = 'block'; // Show loading message
+
+                // Create FormData object to send the file and action
+                const formData = new FormData(uploadForm);
+                formData.append('action', action); // Append the action type to the form data
+
+                // Use Fetch API to send the file and action to the backend's /upload route
+                fetch('/upload', {
+                    method: 'POST', // Use POST method for sending data
+                    body: formData // Set the form data as the request body (includes file and action)
+                    // Fetch automatically sets 'Content-Type' for FormData to multipart/form-data
+                })
+                .then(response => {
+                    // Check if the HTTP response status is OK (2xx range)
+                    if (!response.ok) {
+                         // If the response status is not OK, try to parse JSON error from backend
+                         return response.json().then(errorData => {
+                              // Construct a detailed error message from backend's JSON response
+                              const errorMessage = errorData.error || 'Unknown server error';
+                              throw new Error(`Server responded with status ${response.status}: ${errorMessage}`);
+                         }).catch(() => {
+                             // If JSON parsing fails (e.g., server sent plain text or HTML error page)
+                              // Fallback to a generic error message including the status
+                             throw new Error(`Server responded with status ${response.status}. Could not parse error details.`);
+                         });
+                    }
+                    // If response status is OK, parse the JSON response body
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Backend response:', data); // Log the full response data
+
+                    loadingMessage.style.display = 'none'; // Hide loading message
+
+                    if (data.success) {
+                        // If the backend reported success in the JSON data
+                        outputTextDiv.textContent = data.extracted_text; // Display the processed text
+                        resultsSection.style.display = 'block';
+
+                         // The displayed text is the result of the action (Simplify, Summarize, etc.)
+                         // We don't need separate display logic for different actions here
+                         // because the backend already returned the processed text.
+
+                    } else {
+                        // Handle backend-reported errors (success: false in JSON data)
+                        outputTextDiv.textContent = `Error: ${data.error || 'Processing failed.'}`; // Display backend's error message
+                        resultsSection.style.display = 'block'; // Still show section to display the error message
+                    }
+                })
+                .catch(error => {
+                    // Handle network errors or errors thrown in the .then() blocks
+                    console.error('Fetch error during processing:', error);
+                    loadingMessage.style.display = 'none'; // Hide loading message
+                    // Display a user-friendly error message on the page
+                    outputTextDiv.textContent = `Error: Could not process file. ${error.message}`;
+                    resultsSection.style.display = 'block'; // Show section to display the error message
+                });
+            });
+        });
+
+        // --- Handle click on "Read Aloud" button ---
+        readAloudButton.addEventListener('click', function() {
+             // Get the text content from the output display area
+             const textToRead = outputTextDiv.textContent;
+
+             // Check if there's text to read and it's not an error message
+             if (!textToRead || textToRead.trim() === "" || textToRead.startsWith("Error:")) {
+                 console.warn("No text available to read aloud or text is an error message.");
+                 alert("No text available to read aloud."); // Inform the user
+                 return; // Stop the process if no valid text is found
+             }
+
+             console.log("Calling backend for Read Aloud...");
+             // Optionally show a loading state for the Read Aloud button itself
+
+             // Use Fetch to send the text to the /read_aloud backend route
+             fetch('/read_aloud', {
+                 method: 'POST', // Use POST method
+                 headers: {
+                     'Content-Type': 'application/json' // Indicate we are sending JSON
+                 },
+                 body: JSON.stringify({ text: textToRead }) // Send the text in a JSON object
+             })
+             .then(response => {
+                  // Check if the HTTP response status is OK (2xx range)
+                 if (!response.ok) {
+                      // Try parsing error response as JSON if backend sends it that way
+                      return response.json().then(errorData => {
+                           const errorMessage = errorData.error || 'Unknown server error';
+                           throw new Error(`Server responded with status ${response.status} during audio generation: ${errorMessage}`);
+                      }).catch(() => {
+                          // If not JSON, throw a generic error including the status
+                           throw new Error(`Server responded with status ${response.status} during audio generation.`);
+                      });
+                 }
+                 // If response status is OK, get the audio blob (binary data)
+                 return response.blob(); // response.blob() is used for binary data like audio files (MP3)
+             })
+             .then(audioBlob => {
+                 console.log("Received audio blob from backend.");
+                 // Optionally reset loading state for the Read Aloud button
+
+                 // Stop any currently playing audio before loading new audio
+                 if (!ttsAudioElement.paused) {
+                     ttsAudioElement.pause();
+                 }
+                 // Clear any existing audio source
+                 if (ttsAudioElement.src) {
+                     URL.revokeObjectURL(ttsAudioElement.src); // Clean up previous blob URL
+                     ttsAudioElement.removeAttribute('src');
+                     ttsAudioElement.load();
+                 }
+
+
+                 // Create a temporary URL for the received audio blob
+                 const audioUrl = URL.createObjectURL(audioBlob);
+
+                 // Set the audio element source and play the audio
+                 ttsAudioElement.src = audioUrl;
+                 // ttsAudioElement.style.display = 'block'; // Optional: uncomment to show audio controls on the page
+                 ttsAudioElement.play()
+                    .catch(playError => {
+                         // Handle potential errors when play() is called (e.g., browser autoplay policies)
+                         console.error("Error attempting to play audio:", playError);
+                         // Alert the user and/or show the audio controls so they can manually play
+                         alert("Could not automatically play audio. You might need to click play on the audio controls if they appear, or check browser autoplay settings.");
+                         ttsAudioElement.style.display = 'block'; // Make controls visible if autoplay is blocked
+                    });
+
+                 // Note: Revoking the object URL immediately after play() starts is complex
+                 // if the audio is still needed. It's often done on 'ended' or 'error'
+                 // events, or when new audio is loaded, as handled above.
+
+             })
+             .catch(error => {
+                 // Handle network errors or errors thrown in the .then() blocks
+                 console.error('Fetch error during Read Aloud:', error);
+                 // Optionally reset loading state for the Read Aloud button
+                 alert(`Error reading aloud: ${error.message}`); // Alert the user about the error
+             });
+        });
+
+
+        // --- Handle click on "Share" button ---
+        shareButton.addEventListener('click', function() {
+            const textToShare = outputTextDiv.textContent; // Get text from the output area
+
+            // Check if there's text to share and it's not an error message
+            if (!textToShare || textToShare.trim() === "" || textToShare.startsWith("Error:")) { // Corrected variable name
+                console.warn("No text available to share.");
+                alert("No text available to share."); // Inform the user
+                return; // Stop the process if no valid text is found
+            }
+
+            // Check if the Web Share API is supported by the browser
+            if (navigator.share) {
+                console.log("Web Share API supported. Sharing text...");
+                // Use the native share dialog
+                navigator.share({
+                    title: 'ClarityAssist Text', // Optional title for the shared content
+                    text: textToShare, // The text content to share
+                    // url: document.URL // Optional URL to share along with text
+                })
+                .then(() => {
+                    // This is called if the user successfully shares or dismisses the dialog
+                    console.log('Sharing process completed.');
+                    // Note: Cannot know if the user actually *sent* the share, only that dialog was interacted with.
+                })
+                .catch((error) => {
+                    // This is called if the share dialog fails to open (e.g., user cancels *before* dialog opens, or security error)
+                    console.error('Error attempting to share:', error);
+                     // If the error is a user abort error, it's expected and not a real issue
+                    if (error.name === 'AbortError') {
+                         console.log('Sharing aborted by user.');
+                     } else {
+                         // For other errors (e.g., network issues, invalid data)
+                         alert(`Error sharing: ${error.message}`);
+                     }
+                });
+            } else {
+                // Fallback for browsers/environments that do not support Web Share API
+                console.log("Web Share API not supported in this browser.");
+                // Provide user feedback - e.g., show the text in a modal or copy to clipboard
+                alert("Sharing not supported in this browser. Please manually copy the text from the box.");
+                // Could add functionality here to copy text to clipboard using navigator.clipboard.writeText()
+            }
+        });
+
+
+        // --- Handle click on "Save" button ---
+        saveButton.addEventListener('click', function() {
+             // Get the text content from the output display area
+             const textToSave = outputTextDiv.textContent;
+
+             // Check if there's text to save and it's not an error message
+             if (!textToSave || textToSave.trim() === "" || textToSave.startsWith("Error:")) { // Corrected variable name here
+                 console.warn("No text available to save.");
+                 alert("No text available to save."); // Inform the user
+                 return; // Stop the process if no valid text is found
+             }
+
+             console.log("Calling backend for Save Text...");
+             // Optionally show a loading state for the Save button itself
+
+             // Use Fetch to send the text to the /save_text backend route
+             fetch('/save_text', {
+                 method: 'POST', // Use POST method
+                 headers: {
+                     'Content-Type': 'application/json' // Indicate we are sending JSON data in the body
+                 },
+                 body: JSON.stringify({ text: textToSave }) // Send the text in a JSON object
+             })
+             .then(response => {
+                  // Check if the HTTP response status is OK (2xx range)
+                 if (!response.ok) {
+                      // If the backend returns a non-OK status, it should send JSON error
+                      // We need to check if it's JSON or potentially other error types
+                      return response.json().then(errorData => {
+                           const errorMessage = errorData.error || 'Unknown server error';
+                           throw new Error(`Server responded with status ${response.status} during save operation: ${errorMessage}`);
+                      }).catch(() => {
+                          // Fallback if response is not JSON
+                           throw new Error(`Server responded with status ${response.status} during save operation. Could not parse error details.`);
+                      });
+                 }
+                 // If response is OK, get the response as a Blob (the file content)
+                 return response.blob(); // Get the response body as a Blob
+             })
+             .then(blob => {
+                 // Create a temporary URL for the Blob
+                 const url = URL.createObjectURL(blob);
+                 // Create a temporary anchor (<a>) element
+                 const a = document.createElement('a');
+                 // Set the download link's href to the temporary URL
+                 a.href = url;
+                 // Set the 'download' attribute to specify the default filename
+                 // The backend also suggests a name via Content-Disposition, but this ensures a name.
+                 a.download = 'clarityassist_processed_output.txt'; // Default filename for download
+
+                 // Append the anchor to the body (it doesn't need to be visible)
+                 document.body.appendChild(a);
+                 // Programmatically click the anchor to trigger the download
+                 a.click();
+
+                 // Clean up: Remove the anchor element and revoke the object URL
+                 document.body.removeChild(a);
+                 URL.revokeObjectURL(url); // Release the temporary URL
+
+                 console.log("File download triggered successfully.");
+                 // Optionally reset loading state for the Save button
+             })
+             .catch(error => {
+                 // Handle network errors or errors thrown in the .then() blocks
+                 console.error('Fetch error during Save:', error);
+                 // Optionally reset loading state for the Save button
+                 alert(`Error saving file: ${error.message}`); // Alert the user about the error
+             });
+        });
+
+        // --- Handle Dark Mode Toggle (New!) ---
+        // This is just the initial setup. JS logic to toggle class comes next.
+        // For now, the button doesn't do anything.
+        darkModeToggle.addEventListener('click', function() {
+            console.log("Dark mode toggle clicked (JS logic not yet implemented)");
+            // JS logic to toggle the 'dark-mode' class and save preference goes here in the next step
+        });
+
+
+        // Note: Other buttons already have listeners.
+
+    </script>
+    </body>
+</html>
