@@ -1,4 +1,6 @@
 Flask
-google-generativeai
-gunicorn
 PyPDF2
+gtts
+google-generativeai
+python-docx
+gunicorn
